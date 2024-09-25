@@ -35,6 +35,9 @@ public:
     int open(int camera_facing = 0);
     void close();
 
+    void opticalZoom(float zoomRatio);
+    void digitalZoom(float zoomRatio);
+
     virtual void on_image(const cv::Mat& rgb) const;
 
     virtual void on_image(const unsigned char* nv21, int nv21_width, int nv21_height) const;
@@ -53,6 +56,7 @@ private:
     ACaptureSessionOutputContainer* capture_session_output_container;
     ACaptureSessionOutput* capture_session_output;
     ACameraCaptureSession* capture_session;
+    std::string camera_id;
 };
 
 class NdkCameraWindow : public NdkCamera

@@ -32,12 +32,11 @@ import android.widget.Spinner;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback
-{
+public class MainActivity extends Activity implements SurfaceHolder.Callback {
     public static final int REQUEST_CAMERA = 100;
 
     private Yolov8Ncnn yolov8ncnn = new Yolov8Ncnn();
-    private int facing = 0;
+    private int facing = 1;
 
     private Spinner spinnerModel;
     private Spinner spinnerCPUGPU;
@@ -46,10 +45,13 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback
 
     private SurfaceView cameraView;
 
-    /** Called when the activity is first created. */
+    private float zoomRatio = 1;
+
+    /**
+     * Called when the activity is first created.
+     */
     @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
@@ -78,83 +80,84 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback
         spinnerModel = (Spinner) findViewById(R.id.spinnerModel);
         spinnerModel.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(AdapterView<?> arg0, View arg1, int position, long id)
-            {
-                if (position != current_model)
-                {
+            public void onItemSelected(AdapterView<?> arg0, View arg1, int position, long id) {
+                if (position != current_model) {
                     current_model = position;
                     reload();
                 }
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> arg0)
-            {
+            public void onNothingSelected(AdapterView<?> arg0) {
             }
         });
 
         spinnerCPUGPU = (Spinner) findViewById(R.id.spinnerCPUGPU);
         spinnerCPUGPU.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(AdapterView<?> arg0, View arg1, int position, long id)
-            {
-                if (position != current_cpugpu)
-                {
+            public void onItemSelected(AdapterView<?> arg0, View arg1, int position, long id) {
+                if (position != current_cpugpu) {
                     current_cpugpu = position;
                     reload();
                 }
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> arg0)
-            {
+            public void onNothingSelected(AdapterView<?> arg0) {
+            }
+        });
+
+        Button zoomIn = (Button) findViewById(R.id.zoomIn);
+        zoomIn.setOnClickListener(view -> {
+            if (zoomRatio <= 10.0f) {
+                zoomRatio = zoomRatio + 0.5f;
+                yolov8ncnn.zoom(zoomRatio);
+            }
+        });
+        Button zoomOut = (Button) findViewById(R.id.zoomOut);
+        zoomOut.setOnClickListener(view -> {
+            if (zoomRatio > 1.5f) {
+                zoomRatio = zoomRatio - 0.5f;
+                yolov8ncnn.zoom(zoomRatio);
             }
         });
 
         reload();
     }
 
-    private void reload()
-    {
+    private void reload() {
         boolean ret_init = yolov8ncnn.loadModel(getAssets(), current_model, current_cpugpu);
-        if (!ret_init)
-        {
+        if (!ret_init) {
             Log.e("MainActivity", "yolov8ncnn loadModel failed");
         }
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height)
-    {
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         yolov8ncnn.setOutputWindow(holder.getSurface());
     }
 
     @Override
-    public void surfaceCreated(SurfaceHolder holder)
-    {
+    public void surfaceCreated(SurfaceHolder holder) {
     }
 
     @Override
-    public void surfaceDestroyed(SurfaceHolder holder)
-    {
+    public void surfaceDestroyed(SurfaceHolder holder) {
     }
 
     @Override
-    public void onResume()
-    {
+    public void onResume() {
         super.onResume();
 
-        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
-        {
-            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA}, REQUEST_CAMERA);
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
         }
 
         yolov8ncnn.openCamera(facing);
     }
 
     @Override
-    public void onPause()
-    {
+    public void onPause() {
         super.onPause();
 
         yolov8ncnn.closeCamera();

@@ -253,6 +253,18 @@ JNIEXPORT jboolean JNICALL Java_com_tencent_yolov8ncnn_Yolov8Ncnn_closeCamera(JN
     return JNI_TRUE;
 }
 
+JNIEXPORT jboolean JNICALL Java_com_tencent_yolov8ncnn_Yolov8Ncnn_zoom(JNIEnv* env, jobject thiz, jfloat zoomRatio)
+{
+    if (zoomRatio < 0 || zoomRatio > 10)
+        return JNI_FALSE;
+
+    __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "zoom %2f", zoomRatio);
+
+    g_camera->digitalZoom(zoomRatio);
+
+    return JNI_TRUE;
+}
+
 // public native boolean setOutputWindow(Surface surface);
 JNIEXPORT jboolean JNICALL Java_com_tencent_yolov8ncnn_Yolov8Ncnn_setOutputWindow(JNIEnv* env, jobject thiz, jobject surface)
 {

@@ -140,7 +140,7 @@ static void generate_grids_and_stride(const int target_w, const int target_h, st
 static void generate_proposals(std::vector<GridAndStride> grid_strides, const ncnn::Mat& pred, float prob_threshold, std::vector<Object>& objects)
 {
     const int num_points = grid_strides.size();
-    const int num_class = 80;
+    const int num_class = 11;
     const int reg_max_1 = 16;
 
     for (int i = 0; i < num_points; i++)
@@ -302,11 +302,12 @@ int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_th
     std::vector<Object> proposals;
     
     ncnn::Mat out;
-    ex.extract("output", out);
+    ex.extract("output0", out);
 
     std::vector<int> strides = {8, 16, 32}; // might have stride=64
     std::vector<GridAndStride> grid_strides;
     generate_grids_and_stride(in_pad.w, in_pad.h, strides, grid_strides);
+    prob_threshold = 0.7f;
     generate_proposals(grid_strides, out, prob_threshold, proposals);
 
     // sort all proposals by score from highest to lowest
@@ -356,7 +357,7 @@ int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_th
 
 int Yolo::draw(cv::Mat& rgb, const std::vector<Object>& objects)
 {
-    static const char* class_names[] = {
+    static const char* class_names1[] = {
         "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
         "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
         "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
@@ -367,6 +368,22 @@ int Yolo::draw(cv::Mat& rgb, const std::vector<Object>& objects)
         "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
         "hair drier", "toothbrush"
     };
+
+
+    static const char* class_names[] = {
+            "T-H",
+            "T-G/M",
+            "T-L",
+            "T-F/L",
+            "T-G/M-1",
+            "T-D",
+            "T-B",
+            "T-E/J-1",
+            "T-C/K",
+            "T-E/J",
+            "T-C/K-1"
+    };
+
 
     static const unsigned char colors[19][3] = {
         { 54,  67, 244},
