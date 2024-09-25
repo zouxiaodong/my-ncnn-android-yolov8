@@ -44,6 +44,8 @@ public:
 
     int draw(cv::Mat& rgb, const std::vector<Object>& objects);
 
+    void initNativeCallback(JavaVM *vm, jlong nativeObjAddr, jobject pJobject);
+
 private:
     ncnn::Net yolo;
     int target_size;
@@ -51,6 +53,14 @@ private:
     float norm_vals[3];
     ncnn::UnlockedPoolAllocator blob_pool_allocator;
     ncnn::PoolAllocator workspace_pool_allocator;
+    /**
+      * 全局引用
+      * */
+    JavaVM *javaVM;
+    //Java传过来的Mat对象内存地址
+    jlong j_mat_addr;
+    //回调类
+    jobject j_callback;
 };
 
 #endif // NANODET_H

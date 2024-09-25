@@ -17,13 +17,17 @@ package com.tencent.yolov8ncnn;
 import android.content.res.AssetManager;
 import android.view.Surface;
 
-public class Yolov8Ncnn
-{
+public class Yolov8Ncnn {
     public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
+
     public native boolean openCamera(int facing);
+
     public native boolean closeCamera();
+
     public native boolean zoom(float zoomRatio);
-    public native boolean setOutputWindow(Surface surface);
+
+    //public native boolean setOutputWindow(Surface surface);
+    public native boolean setOutputWindow(Surface surface, long nativeObjAddr, INativeCallback nativeCallback);
 
     static {
         System.loadLibrary("yolov8ncnn");

@@ -16,10 +16,15 @@ package com.tencent.yolov8ncnn;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -32,7 +37,17 @@ import android.widget.Spinner;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 
-public class MainActivity extends Activity implements SurfaceHolder.Callback {
+import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class MainActivity extends Activity implements SurfaceHolder.Callback, INativeCallback {
     public static final int REQUEST_CAMERA = 100;
 
     private Yolov8Ncnn yolov8ncnn = new Yolov8Ncnn();
@@ -44,6 +59,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     private int current_cpugpu = 0;
 
     private SurfaceView cameraView;
+    private Mat mat;
 
     private float zoomRatio = 1;
 
@@ -54,7 +70,8 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-
+        OpenCVLoader.initDebug();
+        mat = new Mat();
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         cameraView = (SurfaceView) findViewById(R.id.cameraview);
@@ -134,7 +151,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        yolov8ncnn.setOutputWindow(holder.getSurface());
+        yolov8ncnn.setOutputWindow(holder.getSurface(), mat.getNativeObjAddr(), this);
     }
 
     @Override
@@ -161,5 +178,94 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback {
         super.onPause();
 
         yolov8ncnn.closeCamera();
+    }
+
+    @Override
+    public void onClassify(float[] possibles) {
+
+    }
+
+    @Override
+    public void onSegmentation(ArrayList<float[]> segmentationOutput, ArrayList<float[]> detectOutput) {
+
+    }
+
+
+    @Override
+    public void onDetect(ArrayList<float[]> output) {
+        if (output.isEmpty()) {
+            return;
+        }
+        List<YoloResult> results = new ArrayList<>();
+        for (float[] it : output) {
+            YoloResult yolo = new YoloResult();
+
+            float[] array = new float[4];
+            array[0] = dp2px(it[0]);
+            array[1] = dp2px(it[1]);
+            array[2] = dp2px(it[2]);
+            array[3] = dp2px(it[3]);
+            yolo.setPosition(array);
+
+            yolo.setType((int) it[4]);
+
+            //保留两位有效小数
+            yolo.setProb(String.format("%.2f", it[5]) + "%");
+            results.add(yolo);
+        }
+        Log.e("YOLO", output.toString());
+        //binding.getDetectView().updateTargetPosition(results);
+
+        if (mat.width() > 0 || mat.height() > 0) {
+            Bitmap bitmap = Bitmap.createBitmap(mat.width(), mat.height(), Bitmap.Config.ARGB_8888);
+            Utils.matToBitmap(mat, bitmap, true);
+            saveBitmap(bitmap);
+        } else {
+            Log.d("YOLOV8", "width: " + mat.width() + ", height: " + mat.height());
+        }
+    }
+
+    private void saveBitmap(Bitmap bitmap) {
+        File fileDirectory = getApplicationContext().getFilesDir();
+        String filePath = fileDirectory.getAbsolutePath() + "/image.jpg";
+
+        try (FileOutputStream outputStream = new FileOutputStream(filePath)) {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+
+    public float getScreenDensity(Context context) {
+        WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        Display display;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            display = context.getDisplay();
+        } else {
+            display = windowManager.getDefaultDisplay();
+        }
+        if (display == null) {
+            return 1f;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return context.getResources().getDisplayMetrics().density;
+        } else {
+            display.getMetrics(displayMetrics);
+            return displayMetrics.density;
+        }
+    }
+
+    public float px2dp(float px) {
+        return px / getScreenDensity(this);
+    }
+
+    /**
+     * dp转px
+     */
+    public float dp2px(float dp) {
+        return dp * getScreenDensity(this);
     }
 }
