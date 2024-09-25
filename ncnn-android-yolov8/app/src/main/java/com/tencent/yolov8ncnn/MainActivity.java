@@ -219,7 +219,7 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, IN
         if (mat.width() > 0 || mat.height() > 0) {
             Bitmap bitmap = Bitmap.createBitmap(mat.width(), mat.height(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(mat, bitmap, true);
-            saveBitmap(bitmap);
+            //saveBitmap(bitmap);
         } else {
             Log.d("YOLOV8", "width: " + mat.width() + ", height: " + mat.height());
         }
