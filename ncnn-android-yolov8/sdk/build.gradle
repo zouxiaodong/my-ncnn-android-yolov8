@@ -91,17 +91,15 @@
 apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 def openCVersionName = "4.9.0"
-def openCVersionCode = ((4 * 100 + 9) * 100 + 0) * 10 + 0
 
 println "OpenCV: " +openCVersionName + " " + project.buildscript.sourceFile
 
 android {
     namespace 'org.opencv'
-    compileSdkVersion 33
-
+    compileSdkVersion 34
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 33
+        targetSdkVersion 34
 
 
         externalNativeBuild {
