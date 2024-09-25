@@ -85,4 +85,4 @@ lint/tmp/
 # lint/reports/
 ncnn-android-yolov8/.idea/
 ncnn-android-yolov8/app/src/main/jni/ncnn-20240410-android-vulkan/
-ncnn-android-yolov8/app/src/main/jni/opencv-mobile-2.4.13.7-android/
+ncnn-android-yolov8/app/src/main/jni/opencv-mobile-4.9.0-android/
