@@ -22,9 +22,12 @@ import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -124,23 +127,58 @@ public class MainActivity extends Activity implements SurfaceHolder.Callback, IN
             }
         });
 
-        Button zoomIn = (Button) findViewById(R.id.zoomIn);
-        zoomIn.setOnClickListener(view -> {
-            if (zoomRatio <= 10.0f) {
-                zoomRatio = zoomRatio + 0.5f;
-                yolov8ncnn.zoom(zoomRatio);
-            }
-        });
-        Button zoomOut = (Button) findViewById(R.id.zoomOut);
-        zoomOut.setOnClickListener(view -> {
-            if (zoomRatio > 1.5f) {
-                zoomRatio = zoomRatio - 0.5f;
-                yolov8ncnn.zoom(zoomRatio);
-            }
-        });
-
+        bindGesture();
         reload();
     }
+
+    private void zoom() {
+        if (zoomRatio < 1f) {
+            zoomRatio = 1.0f;
+        }
+        if (zoomRatio > 10.0f) {
+            zoomRatio = 10.0f;
+        }
+        yolov8ncnn.zoom(zoomRatio);
+    }
+
+
+    private void bindGesture() {
+        ScaleGestureDetector.OnScaleGestureListener listener = new ScaleGestureDetector.OnScaleGestureListener() {
+            @Override
+            public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
+                float scale = scaleGestureDetector.getScaleFactor();
+                Log.e("MainActivity", "scale:" + scale);
+                //scale 值有点小,放大或缩小时都乘以一个倍数比如1.1,这样放大或缩小时的速度会比较快
+               /* if (scale >= 1.0f) {
+                    scale = scale * 1.1f;
+                } else {
+                    scale = scale * 0.9f;
+                }*/
+                zoomRatio = zoomRatio * scale;
+                zoom();
+                return true;
+            }
+
+            @Override
+            public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
+                return true;
+            }
+
+            @Override
+            public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
+            }
+        };
+
+        ScaleGestureDetector scaleGestureDetector = new ScaleGestureDetector(this, listener);
+
+        cameraView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                return scaleGestureDetector.onTouchEvent(motionEvent);
+            }
+        });
+    }
+
 
     private void reload() {
         boolean ret_init = yolov8ncnn.loadModel(getAssets(), current_model, current_cpugpu);
